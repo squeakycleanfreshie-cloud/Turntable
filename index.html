@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turntable</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            font-family: Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+        #splash {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            z-index: 3;
+        }
+        #splash img {
+            max-width: 200px;
+            width: 40%;
+        }
+        #enterBtn {
+            padding: 20px 40px;
+            font-size: 1.2rem;
+            background: transparent;
+            color: #fff;
+            border: 2px solid #fff;
+            border-radius: 50px;
+            cursor: pointer;
+            letter-spacing: 2px;
+        }
+        #enterBtn:hover {
+            background: #fff;
+            color: #000;
+        }
+        #warning {
+            color: #aaa;
+            font-size: 0.75rem;
+            max-width: 320px;
+            text-align: center;
+            line-height: 1.4;
+            letter-spacing: 0.5px;
+        }
+        #audioHint {
+            color: #aaa;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+        #preshow {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            display: none;
+            z-index: 2;
+        }
+        #content {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+        #content.visible {
+            display: flex;
+        }
+        #wordLine {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5em;
+            max-width: 900px;
+            position: relative;
+            z-index: 5;
+        }
+        .word {
+            color: #fff;
+            font-size: 2.4rem;
+            font-family: Helvetica, Arial, sans-serif;
+            font-style: italic;
+            font-weight: bold;
+            display: inline-block;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            visibility: hidden;
+        }
+        .word.shown {
+            visibility: visible;
+        }
+        .word.big {
+            font-size: 3.4rem;
+        }
+        .corner-img {
+            position: fixed;
+            width: 300px;
+            z-index: 7;
+        }
+        .corner-img.top-left {
+            top: 20px;
+            left: 20px;
+            transform: rotate(-8deg);
+        }
+        .corner-img.bottom-right {
+            bottom: 20px;
+            right: 20px;
+            transform: rotate(8deg);
+        }
+        #contentLogo {
+            max-width: 150px;
+            width: 30%;
+            margin-top: 40px;
+            position: relative;
+            z-index: 5;
+        }
+        #setCredit {
+            position: fixed;
+            bottom: 15px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            color: #ccc;
+            z-index: 1;
+        }
+        #setCredit a {
+            color: #fff;
+            text-decoration: underline;
+        }
+        #setCredit a:hover {
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div id="splash">
+        <img src="logo.png" alt="Logo">
+        <button id="enterBtn">CLICK TO ENTER</button>
+        <p id="warning">This experience contains flashing lights. Viewer discretion is advised for anyone with photosensitive epilepsy.</p>
+        <p id="audioHint">turn ur audio up</p>
+    </div>
+
+    <div id="preshow"></div>
+
+    <div id="content">
+        <img class="corner-img top-left" src="img.png" alt="FLX4">
+        <img class="corner-img bottom-right" src="img.png" alt="FLX4">
+        <div id="wordLine"></div>
+        <img id="contentLogo" src="logo.png" alt="Logo">
+    </div>
+
+    <audio id="bgMusic" src="music.mp3" loop></audio>
+
+    <p id="setCredit">Set by <a href="https://www.youtube.com/watch?v=WIayDxCNymU" target="_blank" rel="noopener noreferrer">djkisscam</a></p>
+
+    <script>
+        const splash = document.getElementById('splash');
+        const preshow = document.getElementById('preshow');
+        const content = document.getElementById('content');
+        const wordLine = document.getElementById('wordLine');
+        const audio = document.getElementById('bgMusic');
+        const enterBtn = document.getElementById('enterBtn');
+
+        const WORDS = [
+            "CODE", "TECHNICAL", "PROJECTS", "FOR", "7H", "A", "WEEK",
+            "FOR", "10", "WEEKS", "THAT", "INCLUDE", "GREAT", "MUSIC",
+            "GET", "A", "PIONEER", "DJ", "FLX4"
+        ];
+
+        const FLASH_TIMES_MS = [
+            2443, 2720, 3093, 3744, 3861, 4171, 4501, 4832, 5152, 5493,
+            5909, 6240, 6581, 6880, 7232, 7339, 7648, 7989, 8320, 8715,
+            8971, 9184, 9291, 9408
+        ];
+
+        const WORD_TIMES_MS = [
+            10517, 10955, 11371, 11819, 12245, 12693, 13120, 13557, 14005, 14432,
+            14859, 15296, 15723, 16171, 16597, 17035, 17483, 17920, 18347
+        ];
+        const PRESHOW_DURATION = 10200;
+
+        enterBtn.addEventListener('click', async () => {
+            splash.style.display = 'none';
+            preshow.style.display = 'block';
+
+            try {
+                await audio.play();
+            } catch (err) {
+                console.error('Audio play failed:', err);
+            }
+
+            runPreshow();
+        });
+
+        function runPreshow() {
+            const startTime = performance.now();
+            let nextIndex = 0;
+            let isWhite = false;
+
+            function tick() {
+                const elapsed = performance.now() - startTime;
+
+                if (elapsed >= PRESHOW_DURATION) {
+                    preshow.style.background = '#000';
+                    preshow.style.display = 'none';
+                    content.classList.add('visible');
+                    runWordReveal(startTime);
+                    return;
+                }
+
+                if (nextIndex < FLASH_TIMES_MS.length && elapsed >= FLASH_TIMES_MS[nextIndex]) {
+                    isWhite = !isWhite;
+                    preshow.style.background = isWhite ? '#fff' : '#000';
+                    nextIndex++;
+                }
+
+                requestAnimationFrame(tick);
+            }
+
+            tick();
+        }
+
+        function runWordReveal(baseStartTime) {
+            WORDS.forEach((word, i) => {
+                const span = document.createElement('span');
+                span.className = 'word';
+                if (i >= WORDS.length - 5) span.classList.add('big');
+                span.textContent = word;
+                wordLine.appendChild(span);
+            });
+            const wordSpans = wordLine.querySelectorAll('.word');
+
+            let nextIndex = 0;
+
+            function tick() {
+                const elapsed = performance.now() - baseStartTime;
+
+                if (nextIndex < WORD_TIMES_MS.length && elapsed >= WORD_TIMES_MS[nextIndex]) {
+                    wordSpans[nextIndex].classList.add('shown');
+                    nextIndex++;
+                }
+
+                if (nextIndex < WORD_TIMES_MS.length) {
+                    requestAnimationFrame(tick);
+                }
+            }
+
+            tick();
+        }
+    </script>
+</body>
+</html>
